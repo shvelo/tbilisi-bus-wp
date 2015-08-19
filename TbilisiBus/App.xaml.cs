@@ -16,8 +16,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
-using Windows.UI.Notifications;
-using Windows.Data.Xml.Dom;
+using Windows.ApplicationModel.Background;
+using System.Diagnostics;
 
 // The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641
 
@@ -38,19 +38,6 @@ namespace TbilisiBus
         {
             this.InitializeComponent();
             this.Suspending += this.OnSuspending;
-
-            var tileXml = TileUpdateManager.GetTemplateContent(TileTemplateType.TileSquare150x150PeekImageAndText01);
-
-            var tileImage = tileXml.GetElementsByTagName("image")[0] as XmlElement;
-            tileImage.SetAttribute("src", "ms-appx:///Assets/Logo.scale-240");
-
-            var tileText = tileXml.GetElementsByTagName("text");
-            (tileText[0] as XmlElement).InnerText = "Row 0";
-            (tileText[1] as XmlElement).InnerText = "Row 1";
-            (tileText[2] as XmlElement).InnerText = "Row 2";
-            (tileText[3] as XmlElement).InnerText = "Row 3";
-            var tileNotification = new TileNotification(tileXml);
-            TileUpdateManager.CreateTileUpdaterForApplication().Update(tileNotification);
         }
 
         /// <summary>
@@ -61,13 +48,6 @@ namespace TbilisiBus
         /// <param name="e">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
-#if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                this.DebugSettings.EnableFrameRateCounter = true;
-            }
-#endif
-
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -130,6 +110,22 @@ namespace TbilisiBus
 
             // Ensure the current window is active.
             Window.Current.Activate();
+
+            registerBackgroundTask();
+        }
+
+        private async void registerBackgroundTask()
+        {
+            await BackgroundExecutionManager.RequestAccessAsync();
+            BackgroundTaskBuilder builder = new BackgroundTaskBuilder();
+            builder.Name = "TileUpdater";
+            builder.TaskEntryPoint = "TileUpdater.Updater";
+            builder.AddCondition(new SystemCondition(SystemConditionType.UserPresent));
+            builder.AddCondition(new SystemCondition(SystemConditionType.InternetAvailable));
+            //builder.SetTrigger(new TimeTrigger(30, false));
+            builder.SetTrigger(new SystemTrigger(SystemTriggerType.InternetAvailable, false));
+            var registration = builder.Register();
+            Debug.WriteLine("Background task registered");
         }
 
         /// <summary>

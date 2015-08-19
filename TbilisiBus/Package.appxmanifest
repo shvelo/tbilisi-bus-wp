@@ -24,8 +24,8 @@
       <Extensions>
         <Extension Category="windows.backgroundTasks" EntryPoint="TileUpdater.Updater">
           <BackgroundTasks>
-            <Task Type="pushNotification" />
-            <m2:Task Type="location" />
+            <Task Type="systemEvent" />
+            <Task Type="timer" />
           </BackgroundTasks>
         </Extension>
       </Extensions>
